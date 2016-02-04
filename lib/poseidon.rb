@@ -5,6 +5,7 @@ require 'thread'
 require 'set'
 require 'logger'
 require 'stringio'
+require 'openssl'
 
 # Top level Poseidon namespace
 #
@@ -76,6 +77,11 @@ module Poseidon
     # Raised when you try to send messages to a producer
     # object that has been #shutdown
     class ProducerShutdownError < StandardError; end
+
+    # Raised when the ca_cert is invalid certification.
+    class InvalidCertificationError < StandardError; end
+
+
   end
 
   def self.logger
@@ -118,3 +124,4 @@ require "poseidon/messages_to_send_batch"
 require "poseidon/producer_compression_config"
 require "poseidon/sync_producer"
 require "poseidon/version"
+require "poseidon/ssl_connect"

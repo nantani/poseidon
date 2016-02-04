@@ -82,6 +82,7 @@ module Poseidon
       :required_acks,
       :socket_timeout_ms,
       :type,
+      :ca_cert_path
     ]
 
     # @api private
@@ -131,6 +132,9 @@ module Poseidon
     #
     # @option options [Integer] :socket_timeout_ms] (10000)
     #   How long the producer socket waits for any reply from server.
+    #
+    # @option options [String] :ca_cert_path] (nil)
+    #   A ca_cert path for SSL. If this path is set, producer can connect over SSL.
     #
     # @api public
     def initialize(brokers, client_id, options = {})

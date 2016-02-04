@@ -21,11 +21,12 @@ module Poseidon
       :retry_backoff_ms => 100,
       :required_acks => 0,
       :ack_timeout_ms => 1500,
-      :socket_timeout_ms => 10_000
+      :socket_timeout_ms => 10_000,
+      :ca_cert_path => nil
     }
 
     attr_reader :client_id, :retry_backoff_ms, :max_send_retries,
-      :metadata_refresh_interval_ms, :required_acks, :ack_timeout_ms, :socket_timeout_ms
+      :metadata_refresh_interval_ms, :required_acks, :ack_timeout_ms, :socket_timeout_ms, :ca_cert_path
     def initialize(client_id, seed_brokers, options = {})
       @client_id = client_id
 
@@ -33,7 +34,7 @@ module Poseidon
 
       @cluster_metadata   = ClusterMetadata.new
       @message_conductor  = MessageConductor.new(@cluster_metadata, @partitioner)
-      @broker_pool        = BrokerPool.new(client_id, seed_brokers, socket_timeout_ms)
+      @broker_pool        = BrokerPool.new(client_id, seed_brokers, socket_timeout_ms, ca_cert_path)
     end
 
     def send_messages(messages)
@@ -110,6 +111,7 @@ module Poseidon
         handle_option(options, :compressed_topics))
 
       @partitioner = handle_option(options, :partitioner)
+      @ca_cert_path = handle_option(options, :ca_cert_path)
 
       raise ArgumentError, "Unknown options: #{options.keys.inspect}" if options.keys.any?
     end

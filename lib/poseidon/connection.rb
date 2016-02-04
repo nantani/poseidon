@@ -12,27 +12,28 @@ module Poseidon
     REPLICA_ID = -1 # Replica id is always -1 for non-brokers
 
     # @yieldparam [Connection]
-    def self.open(host, port, client_id, socket_timeout_ms, &block)
-      connection = new(host, port, client_id, socket_timeout_ms)
+    def self.open(host, port, client_id, socket_timeout_ms, ca_cert_path, &block)
+      connection = new(host, port, client_id, socket_timeout_ms, ca_cert_path)
 
       yield connection
     ensure
       connection.close
     end
 
-    attr_reader :host, :port
+    attr_reader :host, :port, :ca_cert_path
 
     # Create a new connection
     #
     # @param [String] host Host to connect to
     # @param [Integer] port Port broker listens on
     # @param [String] client_id Unique across processes?
-    def initialize(host, port, client_id, socket_timeout_ms)
+    def initialize(host, port, client_id, socket_timeout_ms, ca_cert_path)
       @host = host
       @port = port
 
       @client_id = client_id
       @socket_timeout_ms = socket_timeout_ms
+      @ca_cert_path = ca_cert_path
     end
 
     # Close broker connection
@@ -51,7 +52,7 @@ module Poseidon
       req = ProduceRequest.new( request_common(:produce),
                                 required_acks,
                                 timeout,
-                                messages_for_topics) 
+                                messages_for_topics)
       send_request(req)
       if required_acks != 0
         read_response(ProduceResponse)
@@ -102,7 +103,12 @@ module Poseidon
     def ensure_connected
       if @socket.nil? || @socket.closed?
         begin
-          @socket = TCPSocket.new(@host, @port)
+          if @ca_cert_path.nil?
+            @socket = TCPSocket.new(@host, @port)
+          else
+            @socket = SslConnect.new(@ca_cert_path).get_socket(@host, @port)
+          end
+
         rescue SystemCallError
           raise_connection_failed_error
         end
